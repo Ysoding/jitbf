@@ -2,38 +2,31 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"syscall"
 	"unsafe"
 )
 
 func main() {
-	// 读取二进制文件
-	code, err := ioutil.ReadFile("simple.bin")
+
+	code := []byte{
+		0x55, 0x48, 0x89, 0xe5, 0x48, 0x83, 0xec, 0x08,
+		0x48, 0x89, 0x44, 0x24, 0x18, 0x48, 0xc7, 0x04,
+		0x24, 0x00, 0x00, 0x00, 0x00, 0x48, 0xff, 0xc0,
+		0x48, 0x89, 0x04, 0x24, 0x48, 0x83, 0xc4, 0x08,
+		0x5d, 0xc3,
+	}
+
+	memory, err := syscall.Mmap(-1, 0, len(code), syscall.PROT_READ|syscall.PROT_WRITE|syscall.PROT_EXEC, syscall.MAP_ANON|syscall.MAP_PRIVATE)
 	if err != nil {
 		panic(err)
 	}
+	defer syscall.Munmap(memory)
 
-	// 获取二进制代码的长度
-	codeSize := len(code)
+	copy(memory, code)
 
-	// 使用mmap分配内存
-	mmap, err := syscall.Mmap(-1, 0, codeSize, syscall.PROT_READ|syscall.PROT_WRITE|syscall.PROT_EXEC, syscall.MAP_ANON|syscall.MAP_PRIVATE)
-	if err != nil {
-		panic(err)
-	}
+	memory_ptr := &memory
+	ptr := unsafe.Pointer(&memory_ptr)
+	inc := *(*func(int) int)(ptr)
 
-	// 将二进制代码复制到mmap内存中
-	copy(mmap, code)
-
-	// 将mmap指针转换为函数指针
-	funcPtr := unsafe.Pointer(&mmap[0])
-	execFunc := *(*func() int)(unsafe.Pointer(&funcPtr))
-
-	// 执行函数并打印结果
-	result := execFunc()
-	fmt.Printf("Result: %d\n", result)
-
-	// 解除mmap映射
-	syscall.Munmap(mmap)
+	fmt.Println(inc(13))
 }

@@ -1,0 +1,3 @@
+
+
+fasm ./hello.asm
