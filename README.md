@@ -1,3 +1,5 @@
+Clone from [tsoding](https://github.com/tsoding/bfjit)
+
 > 为了简单（保持跟视频中一致），直接使用Rust重写了。
 
 在go中执行x86原生汇编指令失败[runbin]，执行go自己生成的汇编可以[test]
